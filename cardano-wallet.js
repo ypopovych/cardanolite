@@ -43,7 +43,7 @@ exports.CardanoWallet = class CardanoWallet {
     const txOutputs = [
       new tx.TxOutput(new tx.WalletAddress(address), coins),
       new tx.TxOutput(
-        new tx.WalletAddress(this.getChangeAddress()),
+        new tx.WalletAddress(await this.getChangeAddress()),
         txInputsCoinsSum - fee - coins
       ),
     ]
@@ -60,10 +60,10 @@ exports.CardanoWallet = class CardanoWallet {
   async getBalance() {
     let result = 0
 
-    const addresses = this.getUsedAddressesAndSecrets()
+    const addresses = await this.getUsedAddresses()
 
     for (let i = 0; i < addresses.length; i++) {
-      result += await blockchainExplorer.getAddressBalance(addresses[i].address)
+      result += await blockchainExplorer.getAddressBalance(addresses[i])
     }
 
     return result
@@ -130,18 +130,28 @@ exports.CardanoWallet = class CardanoWallet {
     return fee
   }
 
-  getChangeAddress() {
-    const availableAddresses = this.getUsedAddressesAndSecrets()
+  async getChangeAddress(usedAddressesLimit = 20) {
+    const usedAddressesAndSecrets = await this.getUsedAddressesAndSecrets()
 
-    // TODO - do something smarter, now it just returns a random address from the pool of available ones
+    let result = undefined
 
-    return availableAddresses[Math.floor(Math.random() * availableAddresses.length)].address
+    if (usedAddressesAndSecrets.length < usedAddressesLimit) {
+      const highestUsedChildIndex = usedAddressesAndSecrets.reduce((acc, item) => {
+        return Math.max(item.childIndex, acc)
+      }, 0)
+
+      result = address.deriveAddressAndSecret(this.rootSecret, highestUsedChildIndex + 1).address
+    } else {
+      result = usedAddressesAndSecrets[Math.floor(Math.random() * usedAddressesAndSecrets.length)].address
+    }
+
+    return result
   }
 
   async getUnspentTxOutputsWithSecrets() {
     var result = []
 
-    const addresses = this.getUsedAddressesAndSecrets()
+    const addresses = await this.getUsedAddressesAndSecrets()
 
     for (var i = 0; i < addresses.length; i++) {
       const addressUnspentOutputs = await blockchainExplorer.getUnspentTxOutputs(addresses[i].address)
@@ -156,19 +166,40 @@ exports.CardanoWallet = class CardanoWallet {
     return result
   }
 
-  getUsedAddressesAndSecrets() {
-    // TODO - do something smarter, now it just returns 16 addresses with consecutive child indices
+  async getUsedAddressesAndSecrets() {
+    let result = [];
 
-    const result = []
-    for (let i = 345000; i < 345016; i++) {
-      result.push(address.deriveAddressAndSecret(this.rootSecret, i))
+    for (let i = 0; ; i++) {
+      let usedAddresses = await helpers.filter(this.deriveAddressesAndSecrets(i*20, (i + 1)*20), async (addressData) => {
+        return await blockchainExplorer.isAddressUsed(addressData.address)
+      })
+
+      if (usedAddresses.length === 0) {
+        break;
+      }
+
+      result = result.concat(usedAddresses)
     }
 
     return result
   }
 
-  getUsedAddresses() {
-    return this.getUsedAddressesAndSecrets().map((item) => {
+  deriveAddresses(begin = 0, end = 20) {
+    return this.deriveAddressesAndSecrets(begin, end).map((item) => item.address);
+  }
+
+
+  deriveAddressesAndSecrets(begin = 0, end = 20) {
+    const result = []
+    for (let i = begin; i < end; i++) {
+      result.push(address.deriveAddressAndSecret(this.rootSecret, 0x80000001 + i))
+    }
+
+    return result
+  }
+
+  async getUsedAddresses() {
+    return (await this.getUsedAddressesAndSecrets()).map((item) => {
       return item.address
     })
   }

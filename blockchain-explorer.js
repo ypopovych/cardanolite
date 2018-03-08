@@ -71,3 +71,7 @@ exports.getAddressBalance = async function(address) {
 
   return parseInt(result.caBalance.getCoin)
 }
+
+exports.isAddressUsed = async function(address) {
+  return (await exports.getAddressInfo(address)).caTxNum > 0;
+}

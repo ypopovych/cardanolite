@@ -75,7 +75,7 @@ function mnemonicToHashSeed(mnemonic) {
     }, bigNumber('0'))
     .toString(16)
 
-  var result = new Buffer(
+  result = new Buffer(
     cbor.encode(new Buffer(hashBlake2b256(new Buffer(result, 'hex')), 'hex')),
     'hex'
   )

@@ -9,7 +9,7 @@ const EdDSA = require('elliptic-cardano').eddsaVariant
 const ec = new EdDSA('ed25519')
 
 const {AddressDecodingException} = require('./custom-exceptions')
-const CBORIndefiniteLengthArray = require('./helpers').CBORIndefiniteLengthArray
+const {CBORIndefiniteLengthArray} = require('./helpers')
 const addressHash = require('./utils').addressHash
 const tx = require('./transaction')
 const {add256NoCarry, scalarAdd256ModM, multiply8} = require('./utils')
@@ -44,6 +44,7 @@ exports.deriveAddressAndSecret = function(rootSecretString, childIndex) {
 
   return {
     address,
+    childIndex,
     secret: derivedSecretString,
   }
 }
