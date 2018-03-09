@@ -5,6 +5,7 @@ const bigNumber = require('bignumber.js')
 const crypto = require('crypto')
 const EdDSAOriginal = require('elliptic-cardano').eddsa
 const ecOriginal = new EdDSAOriginal('ed25519')
+const { derivePath, getMasterKeyFromSeed, getPublicKey } = require('ed25519-hd-key')
 
 const hashBlake2b256 = require('./utils').hashBlake2b256
 const validWords = require('./assets/valid-words.en').words
@@ -15,10 +16,10 @@ exports.generateMnemonic = function() {
 }
 
 exports.mnemonicToWalletSecretString = function(mnemonic) {
-  const hashSeed = mnemonicToHashSeed(mnemonic)
+  const hexSeed = bip39.mnemonicToSeed('cruise bike bar reopen mimic title style fence race solar million clean');//mnemonicToHashSeed(mnemonic)
 
   for (let i = 1; i <= 1001; i++) {
-    const hmac = crypto.createHmac('sha512', hashSeed)
+    const hmac = crypto.createHmac('sha512', hexSeed)
     hmac.update(`Root Seed Chain ${i}`)
 
     const digest = hmac.digest('hex')
