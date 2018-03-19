@@ -1,19 +1,19 @@
-const request = require('./utils').request
+const request = require('./helpers/request')
 const config = require('./config')
 
-exports.getUnspentTxOutputs = async function(address) {
-  if (exports.getAddressBalance(address) === 0) {
+async function getUnspentTxOutputs(address) {
+  if (getAddressBalance(address) === 0) {
     // if ballance is zero, all outputs must be spent so we don't waste time and return []
     return []
   }
 
   const unspentTxOutputs = []
 
-  const addressInfo = await exports.getAddressInfo(address)
+  const addressInfo = await getAddressInfo(address)
 
   // order transactions by time from earliest to latest
   const txList = Object.values(addressInfo.caTxList).sort((a, b) => {
-    return parseInt(a.ctbTimeIssued) - parseInt(b.ctbTimeIssued)
+    return parseInt(a.ctbTimeIssued, 10) - parseInt(b.ctbTimeIssued, 10)
   })
 
   for (let i = 0; i < txList.length; i++) {
@@ -21,11 +21,11 @@ exports.getUnspentTxOutputs = async function(address) {
     const txOutputs = Object.values(txList[i].ctbOutputs)
 
     // first we remove the inputs from unspent outputs
-    for (var j = 0; j < txInputs.length; j++) {
-      var txInput = {
+    for (let j = 0; j < txInputs.length; j++) {
+      const txInput = {
         txHash: txList[i].ctbId,
         address: txInputs[j][0],
-        coins: parseInt(txInputs[j][1].getCoin),
+        coins: parseInt(txInputs[j][1].getCoin, 10),
       }
 
       const unspentTxOutputToRemoveIndex = unspentTxOutputs.findIndex((element) => {
@@ -36,11 +36,11 @@ exports.getUnspentTxOutputs = async function(address) {
     }
 
     // then we add the outputs corresponding to our address
-    for (var j = 0; j < txOutputs.length; j++) {
+    for (let j = 0; j < txOutputs.length; j++) {
       const txOutput = {
         txHash: txList[i].ctbId,
         address: txOutputs[j][0],
-        coins: parseInt(txOutputs[j][1].getCoin),
+        coins: parseInt(txOutputs[j][1].getCoin, 10),
         outputIndex: j, // this should be refactored to get the actual map key from the response
       }
 
@@ -53,25 +53,27 @@ exports.getUnspentTxOutputs = async function(address) {
   return unspentTxOutputs
 }
 
-exports.getAddressTxList = async function(address) {
-  const addressInfo = await exports.getAddressInfo(address)
+async function getAddressTxList(address) {
+  const addressInfo = await getAddressInfo(address)
 
   return addressInfo.caTxList
 }
 
-exports.getAddressInfo = async function(address) {
+async function getAddressInfo(address) {
   const url = `${config.blockchain_explorer_url}/api/addresses/summary/${address}`
   const result = await request(url)
 
   return result.Right
 }
 
-exports.getAddressBalance = async function(address) {
-  const result = await exports.getAddressInfo(address)
+async function getAddressBalance(address) {
+  const result = await getAddressInfo(address)
 
-  return parseInt(result.caBalance.getCoin)
+  return parseInt(result.caBalance.getCoin, 10)
 }
 
-exports.isAddressUsed = async function (address) {
-  return (await exports.getAddressInfo(address)).caTxNum > 0
+async function isAddressUsed(address) {
+  return (await getAddressInfo(address)).caTxNum > 0
 }
+
+module.exports = {getUnspentTxOutputs, getAddressTxList, getAddressInfo, getAddressBalance, isAddressUsed}
