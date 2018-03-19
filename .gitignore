@@ -69,3 +69,4 @@ sandbox.js
 
 #files from other branches
 cardano.bundle.test.js
+build/
