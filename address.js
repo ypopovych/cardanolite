@@ -44,6 +44,7 @@ exports.deriveAddressAndSecret = function(rootSecretString, childIndex) {
 
   return {
     address,
+    childIndex,
     secret: derivedSecretString,
   }
 }

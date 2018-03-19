@@ -13,4 +13,12 @@ exports.CBORIndefiniteLengthArray = class CBORIndefiniteLengthArray {
 
     return encoder.push(elementsEncoded)
   }
+
+  async filter(arr, callback) {
+    return (await Promise.all(
+      arr.map(async (item) => {
+        return (await callback(item)) ? item : undefined
+      })
+    )).filter((i) => i !== undefined)
+  }
 }
