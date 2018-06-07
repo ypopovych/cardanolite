@@ -582,7 +582,11 @@ const LoginStatus = connect(
           {class: 'button', onClick: reloadWalletInfo},
           h(RefreshIcon),
           h('div', {class: 'status-icon-button-content'}, 'Refresh')
-        ),
+        )
+      ),
+      h(
+        'label',
+        {class: 'inline', for: 'navcollapse'},
         h(
           'div',
           {class: 'button', onClick: logout},

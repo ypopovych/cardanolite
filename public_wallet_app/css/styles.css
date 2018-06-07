@@ -499,6 +499,10 @@ td {
 .status > div {
   margin: 0 0.6rem 0 0.6rem;
 }
+.status-button-wrapper {
+  display: flex;
+  align-items: center;
+}
 .status .button {
   background-color: var(--navbar);
   color: var(--text-color);
