@@ -11,7 +11,7 @@ const cmdtable =
 
 const prefix = '00000402'
 
-module.exports = function (app, env) {
+module.exports = function(app, env) {
   // eslint-disable-next-line consistent-return
   app.post('/api/transactions', (req, res) => {
     let txHash
@@ -39,7 +39,7 @@ module.exports = function (app, env) {
     const client = new net.Socket()
     client.connect({
       host: 'relays.cardano-mainnet.iohk.io',
-      port: 3000
+      port: 3000,
     })
 
     const initHandshake = () => {
@@ -115,13 +115,14 @@ module.exports = function (app, env) {
             client.write(Buffer.from(prefix + encodedTx, 'hex'))
             phase = 'result'
             break
-          case 'result':
+          case 'result': {
             client.write(Buffer.from('0000000100000402', 'hex'))
-            let lastPart = data.toString('hex').slice(-66)
+            const lastPart = data.toString('hex').slice(-66)
             success = lastPart.endsWith('f5')
             txHash = lastPart.slice(0, 64)
             phase = 'done'
             break
+          }
           default:
             client.destroy()
             res.end(JSON.stringify({success, txHash}))
