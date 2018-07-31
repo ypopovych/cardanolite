@@ -125,7 +125,7 @@ module.exports = function(app, env) {
           }
           default:
             client.destroy()
-            res.end(JSON.stringify({success, txHash}))
+            res.end(JSON.stringify({success, txHash, txId: txHash, result: success}))
         }
       } catch (err) {
         return res
