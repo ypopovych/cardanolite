@@ -24,6 +24,8 @@ module.exports = function (app, env) {
       return res.status(500).send('bad request format')
     }
 
+    // return res.end(JSON.stringify({success: true, txHash}))
+
     txBody = `8201${txBody}`
 
     // INV menssage 00000024 + [0, TxHash] in CBOR  ie. 0...24 + CBOR_prefix + TxHash
@@ -32,8 +34,7 @@ module.exports = function (app, env) {
     const encodedTx = (txBody.length / 2).toString(16).padStart(8, '0') + txBody
     let code = ''
     let phase = 'not connected'
-    let result = false
-    let txId = null
+    let success = false
 
     const client = new net.Socket()
     client.connect({
@@ -117,17 +118,13 @@ module.exports = function (app, env) {
           case 'result':
             client.write(Buffer.from('0000000100000402', 'hex'))
             let lastPart = data.toString('hex').slice(-66)
-            result = lastPart.endsWith('f5')
-            txId = lastPart.slice(0, 64)
+            success = lastPart.endsWith('f5')
+            txHash = lastPart.slice(0, 64)
             phase = 'done'
             break
           default:
             client.destroy()
-            res.end(JSON.stringify({
-              result,
-              txHash,
-              txId
-            }))
+            res.end(JSON.stringify({success, txHash}))
         }
       } catch (err) {
         return res
